@@ -52,12 +52,6 @@ export default function Admin({
   const [accountsSubTab, setAccountsSubTab] = React.useState<'inventory' | 'purchases'>('inventory');
   const [users, setUsers] = React.useState<UserAccount[]>([]);
   const [searchTerm, setSearchTerm] = React.useState('');
-  const [autopilotSim, setAutopilotSim] = React.useState(true);
-  const [activityLogs, setActivityLogs] = React.useState<any[]>([
-    { id: 'l1', type: 'register', name: 'Zahid Hussain', email: 'zahid_pro@gmail.com', detail: 'Registered with Bronze account', time: 'Just now' },
-    { id: 'l2', type: 'deposit', name: 'Saif Ali', email: 'saif.ali99@gmail.com', detail: 'Deposited $75,000 via Jazzcash', time: '2 mins ago' },
-    { id: 'l3', type: 'purchase', name: 'Emma Wilson', email: 'emma_gold@yahoo.com', detail: 'Purchased MT5 $10,000 Challenge', time: '5 mins ago' }
-  ]);
 
   // Load all users from localStorage
   const refreshUsers = () => {
@@ -72,163 +66,7 @@ export default function Admin({
     return () => clearInterval(interval);
   }, []);
 
-  // Autopilot Traffic & Ingest simulation (Architecturally Honest simulation ticker)
-  React.useEffect(() => {
-    if (!autopilotSim) return;
-    
-    const runSimulator = () => {
-      const firstNames = ['Hamza', 'Saif', 'Zainab', 'Kamran', 'Zahid', 'Ayesha', 'Chloe', 'Zubair', 'Haris', 'Karan', 'Amna', 'Esha'];
-      const lastNames = ['Ali', 'Khan', 'Tariq', 'Shah', 'Malik', 'Rauf', 'Dupont', 'Hussain', 'Siddiqui', 'Farooq'];
-      const fName = firstNames[Math.floor(Math.random() * firstNames.length)];
-      const lName = lastNames[Math.floor(Math.random() * lastNames.length)];
-      const name = `${fName} ${lName}`;
-      const email = `${fName.toLowerCase()}.${lName.toLowerCase()}${Math.floor(Math.random() * 899 + 100)}@gmail.com`;
-      
-      const usersMap = JSON.parse(localStorage.getItem('elitefund_users') || '{}');
-      const allRegistered = Object.values(usersMap) as UserAccount[];
-      
-      const randType = Math.random();
-      
-      if (randType < 0.35 || allRegistered.length < 3) {
-        // Option 1: Live User Registration Ingest
-        if (usersMap[email]) return;
-        const fakeUser: UserAccount = {
-          name,
-          email,
-          rank: 'Bronze Starter',
-          joinedAt: new Date().toISOString(),
-          isAdmin: false,
-          balance: 0,
-          dailyEarnings: 0,
-          totalInvested: 0,
-          investments: [],
-          transactions: [],
-          goals: []
-        };
-        usersMap[email] = fakeUser;
-        localStorage.setItem('elitefund_users', JSON.stringify(usersMap));
-        
-        setActivityLogs(prev => [
-          { id: Math.random().toString(), type: 'register', name, email, detail: 'Organic member registered online', time: 'Just now' },
-          ...prev.slice(0, 4)
-        ]);
-        refreshUsers();
-      } else if (randType < 0.75) {
-        // Option 2: Live Pending Capital Inflow (Deposit Request)
-        const eligible = allRegistered.filter(u => !u.isAdmin);
-        if (eligible.length === 0) return;
-        const targetUser = eligible[Math.floor(Math.random() * eligible.length)];
-        
-        const depositAmount = Math.floor(Math.random() * 45 + 5) * 1000; // $5k to $50k
-        const coinSelect = Math.random() > 0.5;
-        const gateway = coinSelect ? 'Crypto' : 'Jazzcash';
-        
-        const txId = Math.random().toString(36).substr(2, 9);
-        const newTx: Transaction = {
-          id: txId,
-          type: 'deposit',
-          amount: depositAmount,
-          description: `Deposit via ${gateway}`,
-          date: new Date().toISOString(),
-          status: 'pending',
-          verificationKey: coinSelect 
-            ? 'TXID-' + Math.random().toString(36).substring(2, 12).toUpperCase()
-            : 'JAZZ-' + Math.floor(Math.random() * 899999 + 100000),
-          fee: 0,
-          userEmail: targetUser.email,
-          userName: targetUser.name
-        };
-        
-        targetUser.transactions = [newTx, ...(targetUser.transactions || [])];
-        usersMap[targetUser.email] = targetUser;
-        localStorage.setItem('elitefund_users', JSON.stringify(usersMap));
-        
-        setActivityLogs(prev => [
-          { 
-            id: Math.random().toString(), 
-            type: 'deposit', 
-            name: targetUser.name, 
-            email: targetUser.email, 
-            detail: `Initiated $${depositAmount.toLocaleString()} Inflow request via ${gateway}`, 
-            time: 'Just now' 
-          },
-          ...prev.slice(0, 4)
-        ]);
-        refreshUsers();
-      } else {
-        // Option 3: Sim Level Up Promotion
-        const eligible = allRegistered.filter(u => !u.isAdmin);
-        if (eligible.length === 0) return;
-        const targetUser = eligible[Math.floor(Math.random() * eligible.length)];
-        const ranks = ['Silver Elite', 'Gold Sovereign', 'Diamond Legend'];
-        const targetRank = ranks[Math.floor(Math.random() * ranks.length)];
-        
-        targetUser.rank = targetRank;
-        usersMap[targetUser.email] = targetUser;
-        localStorage.setItem('elitefund_users', JSON.stringify(usersMap));
-        
-        setActivityLogs(prev => [
-          { 
-            id: Math.random().toString(), 
-            type: 'rank', 
-            name: targetUser.name, 
-            email: targetUser.email, 
-            detail: `Accumulated status growth: Promoted to ${targetRank}`, 
-            time: 'Just now animate-pulse' 
-          },
-          ...prev.slice(0, 4)
-        ]);
-        refreshUsers();
-      }
-    };
 
-    const interval = setInterval(runSimulator, 12000); // Trigger clean simulated activity stream loop
-    return () => clearInterval(interval);
-  }, [autopilotSim]);
-
-  // Clickable Trader Seeding Trigger
-  const registerTestTrader = () => {
-    const firstNames = ['Bilal', 'Sania', 'Haris', 'Kamran', 'Esha', 'Usman', 'Taha', 'Ayesha', 'Hamza', 'Saif'];
-    const lastNames = ['Ahmed', 'Mirza', 'Rauf', 'Khan', 'Batool', 'Ghani', 'Siddiqui', 'Shah', 'Farooq', 'Ali'];
-    const fName = firstNames[Math.floor(Math.random() * firstNames.length)];
-    const lName = lastNames[Math.floor(Math.random() * lastNames.length)];
-    const name = `${fName} ${lName}`;
-    const email = `${fName.toLowerCase()}.${lName.toLowerCase()}${Math.floor(Math.random() * 899 + 100)}@gmail.com`;
-    
-    const usersMap = JSON.parse(localStorage.getItem('elitefund_users') || '{}');
-    const depositAmount = Math.floor(Math.random() * 8 + 2) * 2500; // $5k to $25k
-    const newUser: UserAccount = {
-      name,
-      email,
-      rank: 'Bronze Starter',
-      joinedAt: new Date().toISOString(),
-      isAdmin: false,
-      balance: depositAmount,
-      dailyEarnings: 0,
-      totalInvested: 0,
-      investments: [],
-      transactions: [
-        {
-          id: 'tx-' + Math.random().toString(36).substr(2, 9),
-          type: 'deposit',
-          amount: depositAmount,
-          description: 'Initial Seed Funding',
-          date: new Date().toISOString(),
-          status: 'completed'
-        }
-      ],
-      goals: []
-    };
-    
-    usersMap[email] = newUser;
-    localStorage.setItem('elitefund_users', JSON.stringify(usersMap));
-    
-    setActivityLogs(prev => [
-      { id: Math.random().toString(), type: 'register', name, email, detail: `Injected New Organic Member with $${depositAmount.toLocaleString()}`, time: 'Just now' },
-      ...prev.slice(0, 4)
-    ]);
-    refreshUsers();
-  };
 
   const filteredUsers = React.useMemo(() => {
     return users.map(user => {
@@ -263,34 +101,13 @@ export default function Admin({
     );
   }, [users, plans, marketData, searchTerm]);
 
-  // Real-time Global Inflow calculations
-  const platformStats = React.useMemo(() => {
-    const totalUsers = users.length;
-    const availableReserve = users.reduce((sum, u) => sum + (u.balance || 0), 0);
-    const activeSubscribed = users.reduce((sum, u) => sum + (u.totalInvested || 0), 0);
-    const cumulativeAssets = users.reduce((sum, u) => sum + ((u as any).totalPortfolioValue || (u.balance + u.totalInvested)), 0);
-    const pendingQueueSize = users.flatMap(u => u.transactions || []).filter(t => t.status === 'pending').length;
-    
-    return {
-      totalUsers,
-      availableReserve,
-      activeSubscribed,
-      cumulativeAssets,
-      pendingQueueSize
-    };
-  }, [users]);
+
 
   return (
     <div className="space-y-10 pb-20">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <h2 className="text-4xl font-black tracking-tight">Master Control</h2>
-            <span className="flex items-center gap-1.5 px-2.5 py-1 bg-green-50 border border-green-200 text-green-700 text-[10px] font-black uppercase rounded-full tracking-wider shadow-sm animate-pulse">
-              <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-              Live Sync
-            </span>
-          </div>
+        <div>
+          <h2 className="text-4xl font-black tracking-tight mb-2">Master Control</h2>
           <p className="text-[#6B6B6B] font-medium uppercase tracking-widest text-xs">Administrative Dashboard</p>
         </div>
         
@@ -303,152 +120,7 @@ export default function Admin({
         </div>
       </header>
 
-      {/* Real-time Dynamic Bento KPI deck with Live Activity Ticker Pipeline */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8" id="admin-bento-parent">
-         {/* Live Stat cards (Col span 7) */}
-         <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6" id="admin-kpi-subparent">
-             {/* Card 1: Total Registered */}
-             <div className="bg-white rounded-[32px] border border-[#E5E5E5] p-6 shadow-sm flex flex-col justify-between" id="kpi-total-users">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="p-3 bg-zinc-50 rounded-2xl text-black">
-                     <Users className="w-5 h-5" />
-                  </div>
-                  <span className="flex items-center gap-1 px-2.5 py-0.5 bg-green-50 text-green-700 text-[9px] font-black uppercase rounded-full tracking-wider">
-                     <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-ping" />
-                     Realtime
-                  </span>
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase text-[#6B6B6B] tracking-widest mb-1">Total Members Registered</p>
-                  <h3 className="text-3xl font-black tracking-tight mb-2">{platformStats.totalUsers} Traders</h3>
-                  <p className="text-xs text-[#6B6B6B] font-medium">Synced instantly from platform accounts roster.</p>
-                </div>
-             </div>
 
-             {/* Card 2: Cumulative Reserve Asset Pool */}
-             <div className="bg-white rounded-[32px] border border-[#E5E5E5] p-6 shadow-sm flex flex-col justify-between" id="kpi-total-reserve">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="p-3 bg-zinc-50 rounded-2xl text-black">
-                     <Landmark className="w-5 h-5" />
-                  </div>
-                  <span className="px-2 py-0.5 bg-zinc-100 text-zinc-600 text-[9px] font-black uppercase rounded-full tracking-wider">
-                     Liquidity
-                  </span>
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase text-[#6B6B6B] tracking-widest mb-1">Available Reserve Pool</p>
-                  <h3 className="text-3xl font-black tracking-tight mb-2">${platformStats.availableReserve.toLocaleString()}</h3>
-                  <p className="text-xs text-[#6B6B6B] font-medium">Active liquid balances in trader wallets.</p>
-                </div>
-             </div>
-
-             {/* Card 3: Active Portfolio Subscription Assets */}
-             <div className="bg-white rounded-[32px] border border-[#E5E5E5] p-6 shadow-sm flex flex-col justify-between" id="kpi-total-invested">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="p-3 bg-zinc-50 rounded-2xl text-black">
-                     <Target className="w-5 h-5" />
-                  </div>
-                  <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-black uppercase rounded-full tracking-wider border border-emerald-100">
-                     Yield Locks
-                  </span>
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase text-[#6B6B6B] tracking-widest mb-1">Managed Wealth Subs</p>
-                  <h3 className="text-3xl font-black tracking-tight mb-2">${platformStats.activeSubscribed.toLocaleString()}</h3>
-                  <p className="text-xs text-[#6B6B6B] font-medium">Working principal on plans.</p>
-                </div>
-             </div>
-
-             {/* Card 4: Action Pipeline Queue */}
-             <div className={`rounded-[32px] p-6 shadow-md border flex flex-col justify-between transition-all duration-300 ${
-                platformStats.pendingQueueSize > 0 
-                  ? 'bg-amber-50/50 border-amber-200 text-amber-900 shadow-amber-100' 
-                  : 'bg-white border-[#E5E5E5] text-black'
-             }`} id="kpi-pending-queue">
-                <div className="flex justify-between items-start mb-4">
-                  <div className={`p-3 rounded-2xl ${platformStats.pendingQueueSize > 0 ? 'bg-amber-100 text-amber-900' : 'bg-zinc-50 text-black'}`}>
-                     <BellRing className={`w-5 h-5 ${platformStats.pendingQueueSize > 0 ? 'animate-bounce' : ''}`} />
-                  </div>
-                  {platformStats.pendingQueueSize > 0 ? (
-                    <span className="px-2.5 py-0.5 bg-amber-600 text-white text-[9px] font-black uppercase rounded-full tracking-wider">
-                       Action Required
-                    </span>
-                  ) : (
-                    <span className="px-2 py-0.5 bg-green-50 text-green-700 text-[9px] font-black uppercase rounded-full tracking-wider border border-green-100">
-                       All Clear
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase text-[#6B6B6B] tracking-widest mb-1">Approval Requests Queue</p>
-                  <h3 className="text-3xl font-black tracking-tight mb-2">{platformStats.pendingQueueSize} Pending</h3>
-                  <p className="text-xs text-[#6B6B6B] font-medium">Deposits, withdrawals, or challenges waiting approval.</p>
-                </div>
-             </div>
-         </div>
-
-         {/* Real-Time Live Activity Feed (Col span 5) */}
-         <div className="lg:col-span-5 bg-[#151619] text-white rounded-[32px] p-6 border border-[#2D2E32] flex flex-col justify-between shadow-lg" id="bento-live-pipeline">
-            <div>
-               <div className="flex items-center justify-between border-b border-zinc-800 pb-4 mb-4">
-                  <div className="flex items-center gap-2">
-                     <Activity className="w-5 h-5 text-green-500 animate-pulse" />
-                     <span className="text-xs font-mono uppercase tracking-widest text-[#9C9C9C] font-black">Live Pipeline Feed</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <button 
-                      onClick={() => setAutopilotSim(!autopilotSim)}
-                      className={`px-2 py-1 rounded text-[8px] font-mono uppercase tracking-widest font-black transition-all ${
-                         autopilotSim 
-                           ? 'bg-green-500 text-black shadow-lg shadow-green-500/20' 
-                           : 'bg-zinc-800 text-zinc-400'
-                      }`}
-                      title="Toggle simulated live trader events on/off"
-                    >
-                      {autopilotSim ? 'Sim: Active' : 'Sim: Off'}
-                    </button>
-                    <button 
-                      onClick={registerTestTrader}
-                      className="px-2 py-1 bg-white hover:bg-zinc-200 text-black rounded text-[8px] font-mono uppercase tracking-widest font-black transition-all flex items-center gap-1"
-                      title="Directly trigger new registration"
-                    >
-                      <Plus className="w-2.5 h-2.5" /> SeedTest
-                    </button>
-                  </div>
-               </div>
-
-               <div className="space-y-3 max-h-[175px] overflow-y-auto no-scrollbar">
-                  {activityLogs.map((log) => (
-                    <div 
-                      key={log.id} 
-                      className={`p-2.5 rounded-xl border border-zinc-900 flex justify-between items-start gap-3 transition-all duration-300 hover:bg-zinc-900 ${
-                         log.type === 'deposit' 
-                           ? 'bg-emerald-950/20 hover:border-emerald-900/40' 
-                           : log.type === 'register' 
-                             ? 'bg-blue-950/20 hover:border-blue-900/40' 
-                             : 'bg-zinc-950/50'
-                      }`}
-                    >
-                      <div className="space-y-0.5 min-w-0">
-                         <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-[10px] font-black text-white truncate max-w-[130px]">{log.name}</span>
-                            <span className="text-[8px] font-mono text-zinc-500 truncate max-w-[100px]">({log.email})</span>
-                         </div>
-                         <p className="text-[10px] font-medium text-zinc-400 leading-tight">{log.detail}</p>
-                      </div>
-                      <span className="text-[8px] font-bold font-mono text-zinc-500 shrink-0 uppercase tracking-widest">{log.time}</span>
-                    </div>
-                  ))}
-               </div>
-            </div>
-
-            <div className="pt-3 border-t border-zinc-800 flex items-center justify-between text-[8px] font-mono uppercase text-[#6B6B6B] tracking-widest">
-               <span>Inflow Network: Online</span>
-               <span>Engine: EliteFund Synapse</span>
-            </div>
-         </div>
-      </div>
 
       <motion.div
         key={activeTab}

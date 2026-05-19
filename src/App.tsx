@@ -620,7 +620,7 @@ export default function App() {
           marketData={marketData}
         />
       )}
-      {activeTab === 'analyst' && <AIAnalyst marketData={marketData} />}
+      {activeTab === 'analyst' && <AIAnalyst marketData={marketData} user={userWithLiveStats as any} plans={plans} />}
     </Layout>
   );
 }

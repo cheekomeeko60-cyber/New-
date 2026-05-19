@@ -60,6 +60,9 @@ export default function Admin({
 
   React.useEffect(() => {
     refreshUsers();
+    // Synchronize users from localStorage in real-time every 3 seconds
+    const interval = setInterval(refreshUsers, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   const filteredUsers = React.useMemo(() => {
@@ -98,8 +101,14 @@ export default function Admin({
   return (
     <div className="space-y-10 pb-20">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div>
-          <h2 className="text-4xl font-black tracking-tight mb-2">Master Control</h2>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <h2 className="text-4xl font-black tracking-tight">Master Control</h2>
+            <span className="flex items-center gap-1.5 px-2.5 py-1 bg-green-50 border border-green-200 text-green-700 text-[10px] font-black uppercase rounded-full tracking-wider shadow-sm">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+              Live Sync
+            </span>
+          </div>
           <p className="text-[#6B6B6B] font-medium uppercase tracking-widest text-xs">Administrative Dashboard</p>
         </div>
         

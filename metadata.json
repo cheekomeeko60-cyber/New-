@@ -1,0 +1,8 @@
+{
+  "name": "EliteFund Marketplace",
+  "description": "A premier investment platform for daily income and a professional marketplace for purchasing funded trading accounts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

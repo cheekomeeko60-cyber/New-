@@ -25,6 +25,36 @@ import {
 } from 'lucide-react';
 import { InvestmentPlan, FundedAccount, PaymentSettings, UserAccount, Transaction, PaymentMethod } from '../types';
 
+export function getUserTrackingData(user: UserAccount) {
+  let hash = 0;
+  for (let i = 0; i < user.email.length; i++) {
+    hash = user.email.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  
+  const idNum = Math.abs(hash % 900000) + 100000;
+  const systemId = `EF-${idNum}`;
+  
+  const ips = ['192.168.1.45', '103.255.4.12', '110.39.231.8', '182.56.92.101', '39.44.156.40', '111.68.103.25'];
+  const ip = ips[Math.abs(hash) % ips.length];
+  
+  const locations = ['Lahore, PK', 'Karachi, PK', 'Islamabad, PK', 'New York, US', 'London, UK', 'Dubai, AE'];
+  const loc = locations[Math.abs(hash + 2) % locations.length];
+  
+  const devices = ['Chromium Mobile', 'Safari iOS', 'Chrome/Win11', 'Firefox/macOS', 'Edge/Windows'];
+  const device = devices[Math.abs(hash + 4) % devices.length];
+
+  const pages = ['Dashboard View', 'Commodity Plan Trade', 'Wallet Transacts', 'Funded Accounts Hub', 'Savings Monitor'];
+  const activePage = pages[Math.abs(hash + 8) % pages.length];
+
+  return {
+    systemId,
+    ip,
+    loc,
+    device,
+    activePage
+  };
+}
+
 interface AdminProps {
   plans: InvestmentPlan[];
   setPlans: (plans: InvestmentPlan[]) => void;
@@ -52,6 +82,10 @@ export default function Admin({
   const [accountsSubTab, setAccountsSubTab] = React.useState<'inventory' | 'purchases'>('inventory');
   const [users, setUsers] = React.useState<UserAccount[]>([]);
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [telemetryLogs, setTelemetryLogs] = React.useState<Array<{id: string, time: string, text: string, type: 'sys' | 'user'}>>([
+    { id: 't1', time: new Date(Date.now() - 4000).toLocaleTimeString(), text: 'System tracking node online. Establishing live security socket...', type: 'sys' },
+    { id: 't2', time: new Date().toLocaleTimeString(), text: 'Web App Telemetry tracking synchronized on port 3000.', type: 'sys' }
+  ]);
 
   // Load all users from localStorage
   const refreshUsers = () => {
@@ -65,6 +99,38 @@ export default function Admin({
     const interval = setInterval(refreshUsers, 3000);
     return () => clearInterval(interval);
   }, []);
+
+  // Telemetry real-time user stream simulator
+  React.useEffect(() => {
+    if (activeTab !== 'users' || users.length === 0) return;
+    
+    const triggerTelemetrySync = () => {
+      const liveUsers = users.filter(u => !u.isAdmin);
+      if (liveUsers.length === 0) return;
+      
+      const targetUser = liveUsers[Math.floor(Math.random() * liveUsers.length)];
+      const tracker = getUserTrackingData(targetUser);
+      
+      const activityPaths = [
+        `synchronized connection node with telemetry database`,
+        `accessed the ${tracker.activePage} interface`,
+        `requested real-time quote refresh heartbeat`,
+        `modified dashboard settings card from device os: ${tracker.device}`,
+        `updated portfolio overview cache from physical location: ${tracker.loc}`,
+        `executed localized browser handshake validation`
+      ];
+      const randomActivity = activityPaths[Math.floor(Math.random() * activityPaths.length)];
+      const text = `Tracker ID ${tracker.systemId} (${targetUser.name}) ${randomActivity}`;
+      
+      setTelemetryLogs(prev => [
+        { id: Math.random().toString(), time: new Date().toLocaleTimeString(), text, type: 'user' },
+        ...prev.slice(0, 5)
+      ]);
+    };
+
+    const interval = setInterval(triggerTelemetrySync, 4500);
+    return () => clearInterval(interval);
+  }, [activeTab, users]);
 
 
 
@@ -144,12 +210,13 @@ export default function Admin({
             </div>
 
             <div className="bg-white rounded-[32px] border border-[#E5E5E5] overflow-hidden shadow-sm overflow-x-auto no-scrollbar">
-              <table className="w-full text-left">
+              <table className="w-full text-left min-w-[900px]">
                 <thead>
                   <tr className="border-b border-[#E5E5E5] bg-zinc-50">
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[#6B6B6B]">Member</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[#6B6B6B]">Financials</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[#6B6B6B]">Status</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[#6B6B6B]">Member / ID Details</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[#6B6B6B]">Device & Telemetry</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[#6B6B6B]">Wallet & Financials</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[#6B6B6B]">Status Rank</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[#6B6B6B]">Action</th>
                   </tr>
                 </thead>
@@ -162,6 +229,38 @@ export default function Admin({
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Glowing Monospace Telemetry Heartbeat / Sync Socket Log Feed */}
+            <div className="bg-[#0F1012] border border-[#232429] rounded-[24px] p-6 shadow-xl text-white space-y-4">
+              <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-md shadow-green-500/50" />
+                  <span className="font-mono text-xs text-green-500 uppercase font-bold tracking-widest">Real-Time User Telemetry Inflow Stream</span>
+                </div>
+                <div className="flex items-center gap-4 text-[9px] font-mono text-zinc-500 uppercase font-black tracking-widest">
+                  <span>Heartbeat Rate: 4.5s</span>
+                  <span>Port: 3000 Security Node: Active</span>
+                </div>
+              </div>
+
+              <div className="font-mono text-[11px] leading-relaxed text-zinc-400 space-y-2 max-h-[160px] overflow-y-auto no-scrollbar">
+                {telemetryLogs.map((log) => (
+                  <div key={log.id} className="flex gap-4 items-start select-none border-l-2 border-zinc-800 hover:border-green-500/50 pl-3 py-0.5 transition-all">
+                    <span className="text-zinc-600 shrink-0">[{log.time}]</span>
+                    {log.type === 'sys' ? (
+                      <span className="text-amber-500 font-bold shrink-0">[System]</span>
+                    ) : (
+                      <span className="text-green-500 font-bold shrink-0">[Track]</span>
+                    )}
+                    <span className="break-all font-medium text-zinc-300">{log.text}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="pt-2 border-t border-zinc-900 text-[9px] font-mono uppercase text-zinc-600 tracking-wider flex justify-between items-center">
+                <span>Active Channels Connected: {users.length} unique nodes</span>
+                <span>EliteFund Gateway Decryptor Node v2.1</span>
+              </div>
             </div>
           </div>
         )}
@@ -577,12 +676,45 @@ function UserRow({ user, onUpdate }: UserRowProps) {
     setIsEditing(false);
   };
 
+  const tracking = getUserTrackingData(user);
+
   return (
     <tr className="hover:bg-zinc-50 transition-colors">
+      {/* Column 1: Member & ID Details */}
       <td className="px-8 py-6">
-        <p className="font-bold text-sm tracking-tight">{user.name}</p>
-        <p className="text-xs text-[#6B6B6B]">{user.email}</p>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            <p className="font-bold text-sm tracking-tight text-zinc-900">{user.name}</p>
+            <span className="font-mono text-[9px] font-black bg-zinc-900 text-white px-2 py-0.5 rounded tracking-wider shadow-sm select-all cursor-pointer" title="Click to copy Track IP Node">
+              {tracking.systemId}
+            </span>
+          </div>
+          <p className="text-xs text-[#6B6B6B] font-medium">{user.email}</p>
+          <div className="text-[9px] font-bold text-zinc-400 font-mono flex items-center gap-1.5 mt-0.5">
+            <span>Joined: {new Date(user.joinedAt).toLocaleDateString()}</span>
+          </div>
+        </div>
       </td>
+
+      {/* Column 2: Device & Live Telemetry */}
+      <td className="px-8 py-6">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-1.5 w-fit">
+            <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-ping" />
+            <span className="text-[9px] font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded uppercase font-mono tracking-widest border border-green-100">
+              Active Socket
+            </span>
+          </div>
+          <p className="text-xs font-mono font-bold text-zinc-800 tracking-tight mt-0.5">At: {tracking.activePage}</p>
+          <div className="flex gap-2 text-[9px] font-mono text-zinc-400 uppercase tracking-widest flex-wrap mt-0.5">
+            <span>IP: <strong className="text-zinc-600 select-all">{tracking.ip}</strong></span>
+            <span>OS: <strong className="text-zinc-600">{tracking.device}</strong></span>
+            <span>Loc: <strong className="text-zinc-600">{tracking.loc}</strong></span>
+          </div>
+        </div>
+      </td>
+
+      {/* Column 3: Wallet Financials */}
       <td className="px-8 py-6">
         {isEditing ? (
           <div className="flex items-center gap-2">
@@ -597,11 +729,13 @@ function UserRow({ user, onUpdate }: UserRowProps) {
         ) : (
           <div>
             <p className="font-bold text-sm text-green-600">${user.balance.toLocaleString()}</p>
-            <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Equity: ${(user as any).totalPortfolioValue?.toLocaleString() || '--'}</p>
+            <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-tight">Equity: ${(user as any).totalPortfolioValue?.toLocaleString() || '--'}</p>
           </div>
         )}
-        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-tight">Principal: ${user.totalInvested.toLocaleString()}</p>
+        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-tight mt-0.5">Principal: ${user.totalInvested.toLocaleString()}</p>
       </td>
+
+      {/* Column 4: Status Rank */}
       <td className="px-8 py-6">
         {isEditing ? (
           <input 
@@ -616,6 +750,8 @@ function UserRow({ user, onUpdate }: UserRowProps) {
           </span>
         )}
       </td>
+
+      {/* Column 5: Actions */}
       <td className="px-8 py-6">
         {isEditing ? (
           <div className="flex gap-2">
